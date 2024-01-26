@@ -31,8 +31,8 @@ def download_rosters(city, timestamp, domain):
     time.sleep(1)
     get_rosters(driver, city_url)
     os.rename(
-        "../export/active_report.xlsx",
-        f"../export/{city_name}_{timestamp}_{domain}.xlsx",
+        "export/active_report.xlsx",
+        f"export/{city_name}_{timestamp}_{domain}.xlsx",
     )
 
 
