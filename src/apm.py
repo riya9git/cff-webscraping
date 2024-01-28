@@ -1,39 +1,31 @@
 import os
 import time
-from selenium.common.exceptions import NoSuchElementException
 
+import pandas as pd
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 
 from util import init_driver, get_login
-
-cities = [
-    ["dublin", "dublinrecguide"],
-    ["fremont", "fremont"],
-    ["hayward", "haywardrec"],
-    ["milpitas", "milpitasrec"],
-    ["mountain_view", "mountainviewrecreation"],
-    ["pacifica", "pacifica"],
-    ["redwood_city", "rwcpark"],
-    ["san_carlos", "sancarlos"],
-    ["san_jose", "sanjoseparksandrec"],
-]
+from sheets import upload_roster
 
 
-def download_rosters(city, timestamp, domain):
+def download_rosters(city, timestamp):
     """
     Get all rosters from city and download.
     """
 
-    city_name, city_url = city
+    city_name, city_url = city["abbreviation"], city["full_url"]
+    domain = city["provider"]
     driver = init_driver()
     login(driver, city_url)
     time.sleep(1)
     get_rosters(driver, city_url)
-    os.rename(
-        "export/active_report.xlsx",
-        f"export/{city_name}_{timestamp}_{domain}.xlsx",
-    )
+
+    df = pd.read_excel("export/active_report.xlsx")
+    upload_roster(df, f"{city_name}_{timestamp}_{domain}")
+
+    os.remove("export/active_report.xlsx")
 
 
 def login(driver, city_url):
@@ -41,7 +33,7 @@ def login(driver, city_url):
     Log into roster portal for a city.
     """
     USERNAME, PASSWORD = get_login()
-    URL = f"https://anc.apm.activecommunities.com/{city_url}/myaccount"
+    URL = city_url
     driver.get(URL)
     time.sleep(1)
     try:
@@ -63,7 +55,7 @@ def get_rosters(driver, city_url):
     Download roster as xlsx for city.
     """
 
-    driver.get(f"https://anc.apm.activecommunities.com/{city_url}/myaccount/roster")
+    driver.get(f"{city_url}/roster")
     time.sleep(1)
 
     if "pagenotfound" not in driver.current_url:

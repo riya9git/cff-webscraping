@@ -2,4 +2,4 @@ login.txt
 __pycache__
 *.csv
 *.xlsx
-export/
+*.json

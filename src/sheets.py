@@ -1,0 +1,112 @@
+import os.path
+
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
+
+SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
+
+CREDENTIALS_LOCATION = "data/credentials.json"
+
+CITY_PORTALS_SHEET_ID = "1jM7ful2aOJ-eO5suBD19KIXH-4jY74GIiihCRtFyxTE"
+CITY_PORTALS_SHEET_NAME = "City Portals"
+
+UPLOAD_SHEET_ID = "1j10jNGR8fPmv4xS86QFqU_ZpCQthVyFLdBoij44P7tQ"
+
+
+def get_creds(oauth_loc=CREDENTIALS_LOCATION, scope=SCOPES):
+    """
+    Gets credentials to access Google Drive. Requires OAuth token.
+    """
+    creds = None
+    # Check for saved token
+    if os.path.exists("token.json"):
+        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(oauth_loc, scope)
+            creds = flow.run_local_server(port=0)
+
+        # Save the credentials for the next run
+        with open("token.json", "w") as token:
+            token.write(creds.to_json())
+
+    return creds
+
+
+def get_values(creds, sheet_id, sheet_range):
+    """
+    Access values of a Gsheet using sheet_id and range.
+    https://developers.google.com/sheets/api/guides/concepts
+    """
+    try:
+        service = build("sheets", "v4", credentials=creds)
+        sheet = service.spreadsheets()
+        result = sheet.values().get(spreadsheetId=sheet_id, range=sheet_range).execute()
+        values = result.get("values", [])
+
+        return values
+
+    except HttpError as err:
+        print(err)
+
+
+def upload_to_sheet(df, creds, sheet_id, title):
+    try:
+        service = build("sheets", "v4", credentials=creds)
+        _ = (
+            service.spreadsheets()
+            .batchUpdate(
+                spreadsheetId=sheet_id,
+                body={"requests": [{"addSheet": {"properties": {"title": title}}}]},
+            )
+            .execute()
+        )
+        df = df.fillna("N/A")
+        values = [df.columns.tolist()] + df.values.tolist()
+        result = (
+            service.spreadsheets()
+            .values()
+            .update(
+                spreadsheetId=sheet_id,
+                range=f"{title}!A1",
+                valueInputOption="USER_ENTERED",
+                body={"values": values},
+            )
+            .execute()
+        )
+
+        print(f"{result.get('updatedCells')} rows written to '{title}'.")
+
+    except HttpError as err:
+        print(err)
+
+
+def get_city_links():
+    """
+    Return config information for the webscraper
+    from "City Links" sheet in "DataManagement Scripts".
+
+    Columns: abbreviation full_name skip user password provider domain full_url
+    """
+    creds = get_creds()
+    values = get_values(creds, CITY_PORTALS_SHEET_ID, CITY_PORTALS_SHEET_NAME)
+
+    header, data = values[0], values[1:]
+    city_links = []
+    for datum in data:
+        city_links.append({header[i]: datum[i] for i in range(len(datum))})
+
+    return city_links
+
+
+def upload_roster(df, sheet_name):
+    """
+    Upload roster to Google sheet.
+    """
+    creds = get_creds()
+    upload_to_sheet(df, creds, UPLOAD_SHEET_ID, sheet_name)

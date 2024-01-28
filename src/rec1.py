@@ -5,26 +5,17 @@ import pandas as pd
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from util import init_driver, get_login, export_file
-
-cities = [
-    ["los_altos", "LosAltosRecreation"],
-    ["millbrae", "millbrae-ca"],
-    ["orinda", "orinda-ca"],
-    ["palo_alto", "palo-alto-ca"],
-    ["pleasanton", "city-of-pleasanton-ca"],
-    ["san_bruno", "san-bruno-ca"],
-    ["san_ramon", "san-ramon-ca"],
-    ["union_city", "union-city-community-and-recreation-services"],
-]
+from util import init_driver, get_login
+from sheets import upload_roster
 
 
-def download_rosters(city, timestamp, domain):
+def download_rosters(city, timestamp):
     """
     Get all rosters from city and download.
     """
+    city_name, city_url = city["abbreviation"], city["full_url"]
+    domain = city["provider"]
     driver = init_driver()
-    city_name, city_url = city
     login(driver, city_url)
     time.sleep(2)
     classes, rosters = get_all_rosters(driver)
@@ -42,7 +33,7 @@ def download_rosters(city, timestamp, domain):
         df = pd.concat(export)
         df = df.rename(columns=df.iloc[0]).drop(df.index[0]).reset_index(drop=True)
 
-        export_file(df, f"{city_name}_{timestamp}_{domain}.csv")
+        upload_roster(df, f"{city_name}_{timestamp}_{domain}")
 
     except ValueError:
         print("No classes found!")
@@ -53,7 +44,7 @@ def login(driver, city_url):
     Log into roster portal for a city.
     """
     USERNAME, PASSWORD = get_login()
-    URL = f"https://secure.rec1.com/CA/{city_url}/dashboard/instructorPortal"
+    URL = city_url
     driver.get(URL)
     time.sleep(1)
     driver.find_element(By.PARTIAL_LINK_TEXT, "Log In").click()
