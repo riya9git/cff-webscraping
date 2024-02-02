@@ -4,7 +4,6 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
-from googleapiclient.errors import HttpError
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
@@ -43,47 +42,33 @@ def get_values(creds, sheet_id, sheet_range):
     Access values of a Gsheet using sheet_id and range.
     https://developers.google.com/sheets/api/guides/concepts
     """
-    try:
-        service = build("sheets", "v4", credentials=creds)
-        sheet = service.spreadsheets()
-        result = sheet.values().get(spreadsheetId=sheet_id, range=sheet_range).execute()
-        values = result.get("values", [])
+    service = build("sheets", "v4", credentials=creds)
+    sheet = service.spreadsheets()
+    result = sheet.values().get(spreadsheetId=sheet_id, range=sheet_range).execute()
+    values = result.get("values", [])
 
-        return values
-
-    except HttpError as err:
-        print(err)
+    return values
 
 
 def upload_to_sheet(df, creds, sheet_id, title):
-    try:
-        service = build("sheets", "v4", credentials=creds)
-        _ = (
-            service.spreadsheets()
-            .batchUpdate(
-                spreadsheetId=sheet_id,
-                body={"requests": [{"addSheet": {"properties": {"title": title}}}]},
-            )
-            .execute()
-        )
-        df = df.fillna("N/A")
-        values = [df.columns.tolist()] + df.values.tolist()
-        result = (
-            service.spreadsheets()
-            .values()
-            .update(
-                spreadsheetId=sheet_id,
-                range=f"{title}!A1",
-                valueInputOption="USER_ENTERED",
-                body={"values": values},
-            )
-            .execute()
-        )
+    df = df.fillna("N/A")
+    values = [df.columns.tolist()] + df.values.tolist()
 
-        print(f"{result.get('updatedCells')} rows written to '{title}'.")
+    service = build("sheets", "v4", credentials=creds)
 
-    except HttpError as err:
-        print(err)
+    # Adding sheet
+    service.spreadsheets().batchUpdate(
+        spreadsheetId=sheet_id,
+        body={"requests": [{"addSheet": {"properties": {"title": title}}}]},
+    ).execute()
+
+    # Uploading values
+    service.spreadsheets().values().update(
+        spreadsheetId=sheet_id,
+        range=f"{title}!A1",
+        valueInputOption="USER_ENTERED",
+        body={"values": values},
+    ).execute()
 
 
 def get_city_links():

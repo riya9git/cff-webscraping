@@ -3,6 +3,7 @@ from datetime import datetime
 import apm
 import rec1
 import sheets
+from util import init_driver
 
 
 def webscrape(city, timestamp):
@@ -12,20 +13,22 @@ def webscrape(city, timestamp):
     the "City Links" Google Sheet.
     """
     city_name = city["full_name"]
-    print(f"#### {city_name} ####")
+    print(f"\n> {city_name}")
     try:
         if city["skip"] == "Y":
             print("Skipped due to config file")
         else:
             match city["provider"]:
                 case "apm":
-                    apm.download_rosters(city, timestamp)
+                    driver = init_driver()
+                    apm.download_rosters(driver, city, timestamp)
+                    driver.close()
                 case "rec1":
-                    rec1.download_rosters(city, timestamp)
+                    driver = init_driver()
+                    rec1.download_rosters(driver, city, timestamp)
+                    driver.close()
                 case _:
                     print("Unconfigured domain")
-            if city["provider"] in ["apm", "rec1"]:
-                print("Success!")
     except Exception as e:
         print(e)
 

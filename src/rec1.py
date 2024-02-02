@@ -5,17 +5,16 @@ import pandas as pd
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
-from util import init_driver, get_login
+from util import get_login
 from sheets import upload_roster
 
 
-def download_rosters(city, timestamp):
+def download_rosters(driver, city, timestamp):
     """
     Get all rosters from city and download.
     """
     city_name, city_url = city["abbreviation"], city["full_url"]
     domain = city["provider"]
-    driver = init_driver()
     login(driver, city_url)
     time.sleep(2)
     classes, rosters = get_all_rosters(driver)
