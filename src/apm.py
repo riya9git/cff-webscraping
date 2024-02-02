@@ -110,5 +110,5 @@ def get_rosters(driver, city_url):
             By.CSS_SELECTOR, "button[type='submit'].btn.btn-strong"
         )
         driver.execute_script("arguments[0].click();", download_button)
-        time.sleep(8)
+        time.sleep(30)
         driver.close()
