@@ -54,30 +54,24 @@ def get_rosters(driver, city_url):
     """
     Download roster as xlsx for city.
     """
-
     driver.get(f"{city_url}/roster")
     time.sleep(1)
 
     if "pagenotfound" not in driver.current_url:
-        # Filter by term
+        # Click "Add activities" button
         driver.find_element(By.CLASS_NAME, "button-add--wrapper").click()
         time.sleep(2)
-        season_filter = driver.find_element(
-            By.CSS_SELECTOR, "[aria-description='All seasons']"
-        )
-        season_filter.click()
-        season_filter.send_keys(Keys.UP)
-        season_filter.send_keys(Keys.ENTER)
+        # Click select all checkbox (using aria-label)
         driver.find_element(
             By.CSS_SELECTOR,
             "button.btn.btn-strong.report-search-list-header__apply-btn",
         ).click()
         driver.find_element(By.CSS_SELECTOR, "[aria-label='All Activities']").click()
+        # Click save button
         driver.find_element(
             By.CSS_SELECTOR, "div.modal-footer__right button.btn.btn-strong"
         ).click()
         time.sleep(1)
-
         # Change output to Excel
         output_type = driver.find_element(
             By.XPATH, '//span[contains(text(), "Adobe Acrobat Reader")]'
@@ -88,7 +82,6 @@ def get_rosters(driver, city_url):
             By.XPATH,
             '//div[text()="Microsoft Excel (accessible)"]',
         ).click()
-
         # Get email
         try:
             output_type = driver.find_element(
@@ -104,7 +97,6 @@ def get_rosters(driver, city_url):
             By.XPATH,
             '//div[text()="Customer email"]',
         ).click()
-
         # Get head of household
         driver.execute_script(
             "arguments[0].click();",
@@ -113,7 +105,6 @@ def get_rosters(driver, city_url):
             ),
         )
         time.sleep(1)
-
         # Download
         download_button = driver.find_element(
             By.CSS_SELECTOR, "button[type='submit'].btn.btn-strong"

@@ -10,7 +10,7 @@
 
 ## 2/1/2024 Todo
 
-1. [ ] Make apm grab all seasons instead of Winter/Fall as is the current implementation. It will be easier to filter all the data once it is online, and will result in a more stable code.
+1. [X] Make apm grab all seasons instead of Winter/Fall as is the current implementation. It will be easier to filter all the data once it is online, and will result in a more stable code.
 2. [ ] Investigate some cities that are not currently working due to non-standard implementations of APM/REC1 frameworks. Determine whether I can make a small adjustment to accommodate these cities, or whether it is better to get the data manually, also depending on city priority.
 3. [ ] Improve logging logic: particularly, the script should distinguish between the Selenium logic failing (clicking on a missing element, etc.) and the logic working and finding 0 elements. Also consider edge cases that may result in logs that are inaccurate. Basically the goal here is to make the logs as robust and reliable as possible.
     - [ ] APM
