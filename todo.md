@@ -1,3 +1,12 @@
+## Some things I want to do
+- [ ] Add commandline argument for local export vs. Gsheets
+    - [ ] Add commandline argument logic
+- [ ] Add custom errors to Selenium (cf. [2. of other todo](#212024-todo))
+    - Should fail gracefully at every step if a certain element doesn't exist, will be useful for debugging too
+    - [ ] APM
+    - [ ] Rec1
+
+
 ## General
 - error handling
     - Fix redwood city
