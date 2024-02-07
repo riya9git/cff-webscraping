@@ -8,12 +8,12 @@ import pandas as pd
 from selenium.webdriver.common.by import By
 
 from sheets import upload_roster
-from util import is_on_page
+from util import init_driver, is_on_page
 
 warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 
 
-def download_rosters(driver, city, timestamp):
+def download_rosters(city, timestamp):
     """
     Get all rosters from city and download.
     """
@@ -23,8 +23,15 @@ def download_rosters(driver, city, timestamp):
     username = city["user"]
     password = city["password"]
     rosters_url = f"{login_url}/roster"
-    download_fn = "export/active_report.xlsx"
+    download_dir = f"export/{city_name}_{timestamp}"
+    download_fn = f"{download_dir}/active_report.xlsx"
     upload_fn = f"{city_name}_{timestamp}_{provider}"
+
+    # Create temp download directory
+    os.mkdir(download_dir)
+
+    # Open window
+    driver = init_driver(download_dir=download_dir)
 
     # Open login screen
     driver.get(login_url)
@@ -68,6 +75,12 @@ def download_rosters(driver, city, timestamp):
                 os.remove(download_fn)
                 print("Outcome: Success")
                 exit_code = 0
+
+    # Remove temp download directory
+    os.rmdir(download_dir)
+
+    # Close driver
+    driver.close()
 
     return exit_code
 

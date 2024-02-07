@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
 from datetime import datetime
+from concurrent.futures import ThreadPoolExecutor
 
 import pandas as pd
 
 import apm
 import rec1
 import sheets
-from util import init_driver
 
 
 def webscrape(city, curr_date, curr_time):
@@ -28,15 +28,9 @@ def webscrape(city, curr_date, curr_time):
         else:
             match city["provider"]:
                 case "apm":
-                    driver = init_driver()
-                    exit_code = apm.download_rosters(driver, city, timestamp)
-                    driver.close()
-
+                    exit_code = apm.download_rosters(city, timestamp)
                 case "rec1":
-                    driver = init_driver()
-                    exit_code = rec1.download_rosters(driver, city, timestamp)
-                    driver.close()
-
+                    exit_code = rec1.download_rosters(city, timestamp)
                 case _:
                     print("Unconfigured domain")
                     exit_code = 5
@@ -67,10 +61,13 @@ def webscrape(city, curr_date, curr_time):
     ]
     sheets.upload_log(df, header=False)
 
-    print("All done!")
+    print("Done")
 
 
 if __name__ == "__main__":
+    # Set parallel to true for faster download
+    parallel = True
+
     print("Starting webscraper")
 
     # Get timestamp of run
@@ -81,11 +78,21 @@ if __name__ == "__main__":
     # Get config files
     print("Getting config file")
     city_links = sheets.get_city_links()
-    print(f"Done! Got records for {len(city_links)} cities.")
+    print(f"Got records for {len(city_links)} cities")
 
-    # Run webscraping
-    print("Running webscraper")
-    for city in city_links:
-        webscrape(city, curr_date, curr_time)
+    if parallel:
+        # Run webscraping in parallel
+        print("Running webscraper in parallel")
+        with ThreadPoolExecutor() as executor:
+            futures = {
+                executor.submit(webscrape, city, curr_date, curr_time)
+                for city in city_links
+            }
+
+    else:
+        # Run sequentially
+        print("Running webscraper sequentially")
+        for city in city_links:
+            webscrape(city, curr_date, curr_time)
 
     print("All done!")

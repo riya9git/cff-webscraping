@@ -10,10 +10,10 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
 from sheets import upload_roster
-from util import is_on_page
+from util import init_driver, is_on_page
 
 
-def download_rosters(driver, city, timestamp):
+def download_rosters(city, timestamp):
     """
     Get all rosters from city and download.
     """
@@ -23,6 +23,9 @@ def download_rosters(driver, city, timestamp):
     username = city["user"]
     password = city["password"]
     upload_fn = f"{city_name}_{timestamp}_{provider}"
+
+    # Open window
+    driver = init_driver()
 
     # Open login screen
     driver.get(roster_url)
@@ -73,6 +76,9 @@ def download_rosters(driver, city, timestamp):
             else:
                 print("Uncaught failure: something went wrong")
                 exit_code = 1
+
+    # Close driver
+    driver.close()
 
     return exit_code
 

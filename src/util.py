@@ -8,19 +8,20 @@ from pathlib import Path
 root_dir = Path(__file__).parents[1]
 
 
-def init_driver(headless=True):
+def init_driver(headless=True, download_dir=None):
     """
     Initialize driver for web-scraping.
     """
     options = webdriver.ChromeOptions()
-    options.add_experimental_option(
-        "prefs",
-        {
-            "download.default_directory": str(root_dir / "export"),
-            "download.directory_upgrade": True,
-            "download.prompt_for_download": False,
-        },
-    )
+    if download_dir:
+        options.add_experimental_option(
+            "prefs",
+            {
+                "download.default_directory": str(root_dir / download_dir),
+                "download.directory_upgrade": True,
+                "download.prompt_for_download": False,
+            },
+        )
     if headless:
         options.add_argument("--headless=new")
     options.add_argument("--window-size=1920,1080")
