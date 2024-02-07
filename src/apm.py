@@ -6,7 +6,7 @@ import pandas as pd
 from selenium.webdriver.common.by import By
 
 from sheets import upload_roster
-from util import get_login, is_on_page
+from util import is_on_page
 
 warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 
@@ -18,6 +18,8 @@ def download_rosters(driver, city, timestamp):
     city_name = city["abbreviation"]
     login_url = city["full_url"]
     provider = city["provider"]
+    username = city["user"]
+    password = city["password"]
     rosters_url = f"{login_url}/roster"
     download_fn = "export/active_report.xlsx"
     upload_fn = f"{city_name}_{timestamp}_{provider}"
@@ -28,7 +30,7 @@ def download_rosters(driver, city, timestamp):
 
     # Login to portal
     print("Logging into portal")
-    login(driver, city_name)
+    login(driver, city_name, username, password)
 
     # Check if failed to log in
     if is_on_page(driver, "incorrect") or is_on_page(driver, "locked"):
@@ -59,12 +61,10 @@ def download_rosters(driver, city, timestamp):
                 print("Success")
 
 
-def login(driver, city_name):
+def login(driver, city_name, username, password):
     """
     Log into roster portal for a city.
     """
-    USERNAME, PASSWORD = get_login()
-
     # Enter username
     print("Entering username")
     if city_name in ["SJ"]:
@@ -73,14 +73,14 @@ def login(driver, city_name):
     else:
         username_aria = "[aria-label='Email address Required']"
     username_field = driver.find_element(By.CSS_SELECTOR, username_aria)
-    username_field.send_keys(USERNAME)
+    username_field.send_keys(username)
 
     # Enter password
     print("Entering password")
     password_field = driver.find_element(
         By.CSS_SELECTOR, "[aria-label='Password Required']"
     )
-    password_field.send_keys(PASSWORD)
+    password_field.send_keys(password)
 
     print("Logging in")
     # Click login button

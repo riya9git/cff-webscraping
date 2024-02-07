@@ -35,13 +35,6 @@ def is_on_page(driver, text):
     element = driver.find_elements(By.XPATH, f"//*[contains(text(), '{text}')]")
     return bool(element)
 
-def get_login():
-    """
-    Return username and password for login.
-    """
-    login_dir = root_dir / "data/login.txt"
-    return open(login_dir, "r").read().split()
-
 
 def export_file(df, file_dir):
     """

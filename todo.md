@@ -1,10 +1,15 @@
 ## Some things I want to do
 - [ ] Add commandline argument for local export vs. Gsheets
     - [ ] Add commandline argument logic
-- [ ] Add custom errors to Selenium (cf. [2. of other todo](#212024-todo))
-    - Should fail gracefully at every step if a certain element doesn't exist, will be useful for debugging too
-    - [X] APM
-    - [ ] Rec1
+    - [ ] Argument for headless
+- [ ] Logging
+    - [ ] Figure out how to append to "Log" Gsheet
+    - [ ] Figure out return states
+        - [ ] Rec1 shows 0 sign-up classes but APM doesn't
+        - [ ] Distinguish between script failure and 0 classes
+    - [ ] Add counts
+        - [ ] Number of courses (courses is generally preferred name)
+        - [ ] Number of sign-ups
 
 ## General
 - Error handling
@@ -15,9 +20,11 @@
 
 1. [X] Make apm grab all seasons instead of Winter/Fall as is the current implementation. It will be easier to filter all the data once it is online, and will result in a more stable code.
 2. [X] Investigate some cities that are not currently working due to non-standard implementations of APM/REC1 frameworks. Determine whether I can make a small adjustment to accommodate these cities, or whether it is better to get the data manually, also depending on city priority.
-3. [ ] Improve logging logic: particularly, the script should distinguish between the Selenium logic failing (clicking on a missing element, etc.) and the logic working and finding 0 elements. Also consider edge cases that may result in logs that are inaccurate. Basically the goal here is to make the logs as robust and reliable as possible.
+3. [X] Improve logging logic: particularly, the script should distinguish between the Selenium logic failing (clicking on a missing element, etc.) and the logic working and finding 0 elements. Also consider edge cases that may result in logs that are inaccurate. Basically the goal here is to make the logs as robust and reliable as possible.
     - [X] APM
-    - [ ] Rec1
+    - [X] Rec1
+        - [X] Bad login
+        - [x] Blank roster page
 4. [ ] Once the logs have been verified, write them to the "Logs" tab of "DataManagement Scripts" so all users can see the output of the log. Be sure to add datetime in there to make it very easy to see when the last time the script was run.
 
 ## Scraping:
@@ -37,11 +44,11 @@
 3. [ ] Generate logs to indicate if a portal was not accessible etc.
   - [ ] Show each portal tried and success or failure, and number of entries in the roster for it.
   - [ ] Inform the user - to go to 'Data Management' and run 'Get City Roster' Script from the CFF menu.
-  - [ ] Look into cities
-    - [ ] Fremont
-    - [ ] Dublin
-    - [ ] Hayward
-    - [ ] Redwood City
+  - [X] Look into cities
+    - [X] Fremont
+    - [X] Dublin
+    - [X] Hayward
+    - [X] Redwood City
 5. An Appscript built into 'Data Management' - called 'Get City Roster'
   - [ ] This script will collect the csv data in specified folder from 'City List' tab
   - [ ] Build a dictionary and add it to AllRoster, per product

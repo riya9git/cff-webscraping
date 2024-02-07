@@ -2,56 +2,82 @@ import re
 import time
 
 import pandas as pd
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.wait import WebDriverWait
 
-from util import get_login
 from sheets import upload_roster
+from util import is_on_page
 
 
 def download_rosters(driver, city, timestamp):
     """
     Get all rosters from city and download.
     """
-    city_name, city_url = city["abbreviation"], city["full_url"]
-    domain = city["provider"]
-    login(driver, city_url)
+    city_name = city["abbreviation"]
+    roster_url = city["full_url"]
+    provider = city["provider"]
+    username = city["user"]
+    password = city["password"]
+    upload_fn = f"{city_name}_{timestamp}_{provider}"
+
+    # Open login screen
+    driver.get(roster_url)
+    time.sleep(1)
+
+    # Login to portal
+    print("Logging into portal")
+    login(driver, city_name, username, password)
     time.sleep(2)
-    classes, rosters = get_all_rosters(driver)
 
-    export = []
-    for i, roster in enumerate(rosters):
-        extra_headers = ["City", "Timestamp", "Class", "Time"]
-        extra_columns = [city_name, timestamp, *classes[i]]
-        header = extra_headers + roster[0]
-        blank = extra_columns + [None] * len(roster[0])
-        data = [[*extra_columns, *row] for row in roster[1:]]
-        export.append(pd.DataFrame([header, blank] + data))
-
+    # Check if login failed
+    # Explanation: rec1 login failure shows up as a window pop-up,
+    # so wait 5 seconds for to see if it shows up (`alert_is_present`).
+    # If not, WebDriverWait will raise a TimeoutException, which in our
+    # case is actually the condition for successfully logging in! This is
+    # why the script only continues if there is a TimeoutException at this step.
     try:
-        df = pd.concat(export)
-        df = df.rename(columns=df.iloc[0]).drop(df.index[0]).reset_index(drop=True)
+        WebDriverWait(driver, 5).until(EC.alert_is_present())
+        print("Failed: could not log in")
+    except TimeoutException:
+        print("Getting rosters")
+        classes, rosters = get_all_rosters(driver)
 
-        upload_roster(df, f"{city_name}_{timestamp}_{domain}")
+        export = []
+        for i, roster in enumerate(rosters):
+            extra_headers = ["City", "Timestamp", "Class", "Time"]
+            extra_columns = [city_name, timestamp, *classes[i]]
+            header = extra_headers + roster[0]
+            blank = extra_columns + [None] * len(roster[0])
+            data = [[*extra_columns, *row] for row in roster[1:]]
+            export.append(pd.DataFrame([header, blank] + data))
 
-    except ValueError:
-        print("No classes found!")
+        try:
+            df = pd.concat(export)
+            df = df.rename(columns=df.iloc[0]).drop(df.index[0]).reset_index(drop=True)
+
+            upload_roster(df, upload_fn)
+
+        except ValueError:
+            if is_on_page(driver, "No results"):
+                print("No classes found!")
+            else:
+                print("Fail: something went wrong")
 
 
-def login(driver, city_url):
+def login(driver, city_name, username, password):
     """
     Log into roster portal for a city.
     """
-    USERNAME, PASSWORD = get_login()
-    URL = city_url
-    driver.get(URL)
-    time.sleep(1)
     driver.find_element(By.PARTIAL_LINK_TEXT, "Log In").click()
-    toggle_button = driver.find_elements(By.CLASS_NAME, "rec1-login-toggle-button")
-    if toggle_button:
-        toggle_button[0].click()
-    driver.find_element(By.NAME, "username").send_keys(USERNAME)
-    driver.find_element(By.NAME, "password").send_keys(PASSWORD)
+    if city_name in ["MB", "SB", "SR"]:
+        print("- Clicking login toggle")
+        toggle_button = driver.find_element(By.CLASS_NAME, "rec1-login-toggle-button")
+        toggle_button.click()
+
+    driver.find_element(By.NAME, "username").send_keys(username)
+    driver.find_element(By.NAME, "password").send_keys(password)
     driver.find_element(By.CLASS_NAME, "btn-primary").click()
 
 
@@ -144,21 +170,14 @@ def go_to_next_page(driver, scope):
         return True
 
 
-def close_roster_page(driver):
-    """
-    Exit from roster page.
-    """
-    driver.find_elements(By.CLASS_NAME, "close")[-1].click()
-
-
 def get_all_rosters(driver):
     """
     Get all non-empty rosters from every page of website catalog.
     """
     classes = []
     rosters = []
-    try_next_page_catalog = True
-    while try_next_page_catalog:
+    is_next_page = True
+    while is_next_page:
         time.sleep(0.5)
         class_names, class_times, class_enrollments, class_links = read_page(driver)
         for i, enrollment in enumerate(class_enrollments):
@@ -172,9 +191,9 @@ def get_all_rosters(driver):
                     time.sleep(0.5)
                     roster.extend(get_roster(driver))
                     try_next_page_roster = go_to_next_page(driver, "roster")
-            close_roster_page(driver)
+            driver.find_elements(By.CLASS_NAME, "close")[-1].click()
             classes.append([class_names[i], class_times[i]])
             rosters.append(roster)
-        try_next_page_catalog = go_to_next_page(driver, "catalog")
+        is_next_page = go_to_next_page(driver, "catalog")
 
     return classes, rosters
