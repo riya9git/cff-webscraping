@@ -3,32 +3,18 @@
     - [ ] Add commandline argument logic
     - [ ] Argument for headless
 - [ ] Logging
-    - [ ] Figure out how to append to "Log" Gsheet
-    - [ ] Figure out return states
-        - [ ] Rec1 shows 0 sign-up classes but APM doesn't
-        - [ ] Distinguish between script failure and 0 classes
+    - [X] Figure out how to append to "Log" Gsheet
+    - [X] Figure out return states
+        - [X] Rec1 shows 0 sign-up classes but APM doesn't
+        - [X] Distinguish between script failure and 0 classes
     - [ ] Add counts
         - [ ] Number of courses (courses is generally preferred name)
         - [ ] Number of sign-ups
-
-## General
-- Error handling
-    - [ ] Get counts from Fremont
-- Gsheets integration
-
-## 2/1/2024 Todo
-
-1. [X] Make apm grab all seasons instead of Winter/Fall as is the current implementation. It will be easier to filter all the data once it is online, and will result in a more stable code.
-2. [X] Investigate some cities that are not currently working due to non-standard implementations of APM/REC1 frameworks. Determine whether I can make a small adjustment to accommodate these cities, or whether it is better to get the data manually, also depending on city priority.
-3. [X] Improve logging logic: particularly, the script should distinguish between the Selenium logic failing (clicking on a missing element, etc.) and the logic working and finding 0 elements. Also consider edge cases that may result in logs that are inaccurate. Basically the goal here is to make the logs as robust and reliable as possible.
-    - [X] APM
-    - [X] Rec1
-        - [X] Bad login
-        - [x] Blank roster page
-4. [ ] Once the logs have been verified, write them to the "Logs" tab of "DataManagement Scripts" so all users can see the output of the log. Be sure to add datetime in there to make it very easy to see when the last time the script was run.
+- [ ] Get counts from Fremont
+- [ ] Parallelize! 
 
 ## Scraping:
-1. [X] Set up Python Google sheets API 
+1. [X] Set up Python Google sheets API
   - [X] Figure out OAuth
   - [X] Import from sheet
   - [X] Export to sheet
@@ -41,8 +27,9 @@
     - [X] Location to send roster data.
     - [X] create a set of INPUTs, Product and Test, similar to input sheet. (?)
   - [X] Out: Obtain the roster csv and upload to this directory.
-3. [ ] Generate logs to indicate if a portal was not accessible etc.
-  - [ ] Show each portal tried and success or failure, and number of entries in the roster for it.
+3. [X] Generate logs to indicate if a portal was not accessible etc.
+  - [X] Show each portal tried and success or failure,
+  - [ ] Number of entries in the roster for it.
   - [ ] Inform the user - to go to 'Data Management' and run 'Get City Roster' Script from the CFF menu.
   - [X] Look into cities
     - [X] Fremont
@@ -80,5 +67,3 @@ Export:
         Note: Same functionality won't work, as save doesn't happen if nothing is changed, so skip this check.
     - Tag these records as 'Export'
     - On export, ask the user where to save the file, and save both .csv and .json versions of the file.
-
-

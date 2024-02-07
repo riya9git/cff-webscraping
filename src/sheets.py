@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os.path
 
 from google.auth.transport.requests import Request
@@ -13,6 +15,7 @@ CITY_PORTALS_SHEET_ID = "1jM7ful2aOJ-eO5suBD19KIXH-4jY74GIiihCRtFyxTE"
 CITY_PORTALS_SHEET_NAME = "City Portals"
 
 UPLOAD_SHEET_ID = "1j10jNGR8fPmv4xS86QFqU_ZpCQthVyFLdBoij44P7tQ"
+UPLOAD_LOG_SHEET_NAME = "Log"
 
 
 def get_creds(oauth_loc=CREDENTIALS_LOCATION, scope=SCOPES):
@@ -71,6 +74,24 @@ def upload_to_sheet(df, creds, sheet_id, title):
     ).execute()
 
 
+def append_to_sheet(df, creds, sheet_id, title, header=False):
+    df = df.fillna("N/A")
+    if header:
+        values = [df.columns.tolist()] + df.values.tolist()
+    else:
+        values = df.values.tolist()
+
+    service = build("sheets", "v4", credentials=creds)
+
+    # Uploading values
+    service.spreadsheets().values().append(
+        spreadsheetId=sheet_id,
+        range=f"{title}!A1",
+        valueInputOption="RAW",
+        body={"values": values},
+    ).execute()
+
+
 def get_city_links():
     """
     Return config information for the webscraper
@@ -95,3 +116,11 @@ def upload_roster(df, sheet_name):
     """
     creds = get_creds()
     upload_to_sheet(df, creds, UPLOAD_SHEET_ID, sheet_name)
+
+
+def upload_log(df, header=False):
+    """
+    Upload webscraping results to Google sheet.
+    """
+    creds = get_creds()
+    append_to_sheet(df, creds, UPLOAD_SHEET_ID, UPLOAD_LOG_SHEET_NAME, header=header)

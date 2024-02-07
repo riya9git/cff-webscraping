@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import os
 import time
 import warnings
@@ -34,7 +36,9 @@ def download_rosters(driver, city, timestamp):
 
     # Check if failed to log in
     if is_on_page(driver, "incorrect") or is_on_page(driver, "locked"):
-        print("Fail: could not log in")
+        print("Caught failure: could not log in")
+        exit_code = 2
+
     else:
         # Open rosters page
         print("Opening rosters page")
@@ -43,7 +47,9 @@ def download_rosters(driver, city, timestamp):
 
         # Check if failed to find rosters page
         if is_on_page(driver, "Page not found"):
-            print("Fail: could not find rosters page")
+            print("Caught failure: could not find rosters page")
+            exit_code = 2
+
         else:
             print("Downloading rosters")
             get_rosters(driver, city_name)
@@ -51,14 +57,19 @@ def download_rosters(driver, city, timestamp):
 
             # Check if nothing downloaded
             if is_on_page(driver, "No records found"):
-                print("Fail: no records found")
+                print("Outcome: No records found")
+                exit_code = 3
+
             else:
                 # Upload file and remove local copy
                 print("Uploading data")
                 df = pd.read_excel(download_fn)
                 upload_roster(df, upload_fn)
                 os.remove(download_fn)
-                print("Success")
+                print("Outcome: Success")
+                exit_code = 0
+
+    return exit_code
 
 
 def login(driver, city_name, username, password):

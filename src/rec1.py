@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import re
 import time
 
@@ -39,7 +41,9 @@ def download_rosters(driver, city, timestamp):
     # why the script only continues if there is a TimeoutException at this step.
     try:
         WebDriverWait(driver, 5).until(EC.alert_is_present())
-        print("Failed: could not log in")
+        print("Caught failure: could not log in")
+        exit_code = 2
+
     except TimeoutException:
         print("Getting rosters")
         classes, rosters = get_all_rosters(driver)
@@ -58,12 +62,19 @@ def download_rosters(driver, city, timestamp):
             df = df.rename(columns=df.iloc[0]).drop(df.index[0]).reset_index(drop=True)
 
             upload_roster(df, upload_fn)
+            print("Outcome: Success")
+            exit_code = 0
 
         except ValueError:
             if is_on_page(driver, "No results"):
-                print("No classes found!")
+                print("Outcome: No classes found!")
+                exit_code = 3
+
             else:
-                print("Fail: something went wrong")
+                print("Uncaught failure: something went wrong")
+                exit_code = 1
+
+    return exit_code
 
 
 def login(driver, city_name, username, password):
