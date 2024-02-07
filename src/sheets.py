@@ -9,7 +9,8 @@ from googleapiclient.discovery import build
 
 SCOPES = ["https://www.googleapis.com/auth/spreadsheets"]
 
-CREDENTIALS_LOCATION = "data/credentials.json"
+CREDS_PATH = "auth/credentials.json"
+TOKEN_PATH = "auth/token.json"
 
 CITY_PORTALS_SHEET_ID = "1jM7ful2aOJ-eO5suBD19KIXH-4jY74GIiihCRtFyxTE"
 CITY_PORTALS_SHEET_NAME = "City Portals"
@@ -18,14 +19,14 @@ UPLOAD_SHEET_ID = "1j10jNGR8fPmv4xS86QFqU_ZpCQthVyFLdBoij44P7tQ"
 UPLOAD_LOG_SHEET_NAME = "Log"
 
 
-def get_creds(oauth_loc=CREDENTIALS_LOCATION, scope=SCOPES):
+def get_creds(oauth_loc=CREDS_PATH, scope=SCOPES):
     """
     Gets credentials to access Google Drive. Requires OAuth token.
     """
     creds = None
     # Check for saved token
-    if os.path.exists("token.json"):
-        creds = Credentials.from_authorized_user_file("token.json", SCOPES)
+    if os.path.exists(TOKEN_PATH):
+        creds = Credentials.from_authorized_user_file(TOKEN_PATH, SCOPES)
     if not creds or not creds.valid:
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
@@ -34,7 +35,7 @@ def get_creds(oauth_loc=CREDENTIALS_LOCATION, scope=SCOPES):
             creds = flow.run_local_server(port=0)
 
         # Save the credentials for the next run
-        with open("token.json", "w") as token:
+        with open(TOKEN_PATH, "w") as token:
             token.write(creds.to_json())
 
     return creds
