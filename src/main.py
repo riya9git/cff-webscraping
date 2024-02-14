@@ -16,9 +16,9 @@ LOG_HEADER = [
     "date",
     "time",
     "exit_code",
-    "skip",
+    # "skip",
     "provider",
-    "domain",
+    # "domain",
     "full_url",
 ]
 
