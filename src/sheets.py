@@ -45,7 +45,7 @@ def get_creds(oauth_loc=CREDS_PATH, scope=SCOPES):
     return creds
 
 
-def get_values(creds, sheet_id, sheet_range):
+def get_sheet_values(creds, sheet_id, sheet_range):
     """
     Access values of a Gsheet using sheet_id and range.
     https://developers.google.com/sheets/api/guides/concepts
@@ -102,6 +102,23 @@ def upload_to_sheet(df, creds, sheet_id, title):
         ).execute()
 
 
+def rename_sheet(creds, sheet_id, sheet_name, title):
+    with build("sheets", "v4", credentials=creds) as service:
+        service.spreadsheets().batchUpdate(
+            spreadsheetId=sheet_id,
+            body={
+                "requests": [
+                    {
+                        "updateSheetProperties": {
+                            "properties": {"sheetId": sheet_name, "title": title},
+                            "fields": "title",
+                        }
+                    }
+                ]
+            },
+        ).execute()
+
+
 def append_to_sheet(df, creds, sheet_id, title, header=False):
     """
     Append data to sheet. Has optional `header` parameter to also
@@ -128,25 +145,12 @@ def create_new_roster_file(timestamp, log_header):
     Create new roster file, and name the first sheet Log.
     """
     creds = get_creds()
-    
+
     # Create new sheet
     sheet_id = create_sheet(timestamp, FOLDER_ID, creds)["id"]
 
     # Rename Sheet1 to Log
-    with build("sheets", "v4", credentials=creds) as service:
-        service.spreadsheets().batchUpdate(
-            spreadsheetId=sheet_id,
-            body={
-                "requests": [
-                    {
-                        "updateSheetProperties": {
-                            "properties": {"sheetId": 0, "title": "Log"},
-                            "fields": "title",
-                        }
-                    }
-                ]
-            },
-        ).execute()
+    rename_sheet(creds, sheet_id, 0, "Log")
 
     # Add header to log
     append_to_sheet(log_header, creds, sheet_id, "Log")
@@ -162,7 +166,7 @@ def get_city_links():
     Columns: abbreviation full_name skip user password provider domain full_url
     """
     creds = get_creds()
-    values = get_values(creds, CITY_PORTALS_SHEET_ID, CITY_PORTALS_SHEET_NAME)
+    values = get_sheet_values(creds, CITY_PORTALS_SHEET_ID, CITY_PORTALS_SHEET_NAME)
 
     # Reformat into list of dicts
     header, data = values[0], values[1:]
