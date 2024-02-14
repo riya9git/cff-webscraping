@@ -83,7 +83,8 @@ if __name__ == "__main__":
 
     # Create new sheet
     print("Creating new sheet")
-    sheet_id = sheets.create_new_roster_file(datetime, pd.DataFrame(LOG_HEADER).T)
+    log_header = pd.DataFrame(LOG_HEADER + ["roster_count", "course_count"]).T
+    sheet_id = sheets.create_new_roster_file(datetime, log_header)
     print(f"id: {sheet_id}")
 
     if parallel:
