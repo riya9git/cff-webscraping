@@ -1,17 +1,13 @@
 ## Some things I want to do
+- [x] Create new sheet for each run
+- [ ] Turn Gsheets connector into class
 - [ ] Add commandline argument for local export vs. Gsheets
     - [ ] Add commandline argument logic
     - [ ] Argument for headless
-- [ ] Logging
-    - [X] Figure out how to append to "Log" Gsheet
-    - [X] Figure out return states
-        - [X] Rec1 shows 0 sign-up classes but APM doesn't
-        - [X] Distinguish between script failure and 0 classes
-    - [ ] Add counts
-        - [ ] Number of courses (courses is generally preferred name)
-        - [ ] Number of sign-ups
+- [ ] Add counts
+    - [ ] Number of courses (courses is generally preferred name)
+    - [ ] Number of sign-ups
 - [ ] Get counts from Fremont
-- [ ] Parallelize! 
 
 ## Scraping:
 1. [X] Set up Python Google sheets API
@@ -36,6 +32,7 @@
     - [X] Dublin
     - [X] Hayward
     - [X] Redwood City
+- [x] Parallelize
 5. An Appscript built into 'Data Management' - called 'Get City Roster'
   - [ ] This script will collect the csv data in specified folder from 'City List' tab
   - [ ] Build a dictionary and add it to AllRoster, per product

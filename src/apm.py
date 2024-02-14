@@ -13,19 +13,17 @@ from util import init_driver, is_on_page
 warnings.filterwarnings("ignore", category=UserWarning, module="openpyxl")
 
 
-def download_rosters(city, timestamp):
+def download_rosters(city, sheet_id):
     """
     Get all rosters from city and download.
     """
     city_name = city["abbreviation"]
     login_url = city["full_url"]
-    provider = city["provider"]
     username = city["user"]
     password = city["password"]
     rosters_url = f"{login_url}/roster"
-    download_dir = f"export/{city_name}_{timestamp}"
+    download_dir = f"export/{city_name}"
     download_fn = f"{download_dir}/active_report.xlsx"
-    upload_fn = f"{city_name}_{timestamp}_{provider}"
 
     # Create temp download directory
     os.mkdir(download_dir)
@@ -71,7 +69,7 @@ def download_rosters(city, timestamp):
                 # Upload file and remove local copy
                 print("Uploading data")
                 df = pd.read_excel(download_fn)
-                upload_roster(df, upload_fn)
+                upload_roster(df, sheet_id, city_name)
                 os.remove(download_fn)
                 print("Outcome: Success")
                 exit_code = 0

@@ -10,13 +10,25 @@ import rec1
 import sheets
 
 
-def webscrape(city, curr_date, curr_time):
+LOG_HEADER = [
+    "abbreviation",
+    "full_name",
+    "date",
+    "time",
+    "exit_code",
+    "skip",
+    "provider",
+    "domain",
+    "full_url",
+]
+
+
+def webscrape(city, sheet_id):
     """
     Kick off webscraping for a city. Automatically dispatch to the right
     package based on city domain. Expects a well-formatted row from the
     the "City Links" Google Sheet.
     """
-    timestamp = curr_date + curr_time
     city_name = city["full_name"]
     print(f"\n> {city_name}")
 
@@ -28,9 +40,9 @@ def webscrape(city, curr_date, curr_time):
         else:
             match city["provider"]:
                 case "apm":
-                    exit_code = apm.download_rosters(city, timestamp)
+                    exit_code = apm.download_rosters(city, sheet_id)
                 case "rec1":
-                    exit_code = rec1.download_rosters(city, timestamp)
+                    exit_code = rec1.download_rosters(city, sheet_id)
                 case _:
                     print("Unconfigured domain")
                     exit_code = 5
@@ -46,20 +58,8 @@ def webscrape(city, curr_date, curr_time):
     # Upload log
     print("Uploading log")
     df = pd.DataFrame([city])
-    df = df[
-        [
-            "abbreviation",
-            "full_name",
-            "date",
-            "time",
-            "exit_code",
-            "skip",
-            "provider",
-            "domain",
-            "full_url",
-        ]
-    ]
-    sheets.upload_log(df, header=False)
+    df = df[LOG_HEADER]
+    sheets.upload_log(df, sheet_id, header=False)
 
     print("Done")
 
@@ -73,26 +73,31 @@ if __name__ == "__main__":
     # Get timestamp of run
     curr_date = datetime.now().strftime("%Y-%m-%d")
     curr_time = datetime.now().strftime("%H-%M-%S")
-    print(f"Datetime of run: {curr_date}{curr_time}")
+    datetime = curr_date + "_" + curr_time
+    print(f"Datetime of run: {datetime}")
 
     # Get config files
     print("Getting config file")
     city_links = sheets.get_city_links()
     print(f"Got records for {len(city_links)} cities")
 
+    # Create new sheet
+    print("Creating new sheet")
+    sheet_id = sheets.create_new_roster_file(datetime, pd.DataFrame(LOG_HEADER).T)
+    print(f"id: {sheet_id}")
+
     if parallel:
         # Run webscraping in parallel
         print("Running webscraper in parallel")
         with ThreadPoolExecutor() as executor:
             futures = {
-                executor.submit(webscrape, city, curr_date, curr_time)
-                for city in city_links
+                executor.submit(webscrape, city, sheet_id) for city in city_links
             }
 
     else:
         # Run sequentially
         print("Running webscraper sequentially")
         for city in city_links:
-            webscrape(city, curr_date, curr_time)
+            webscrape(city, sheet_id)
 
     print("All done!")

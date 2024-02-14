@@ -13,16 +13,14 @@ from sheets import upload_roster
 from util import init_driver, is_on_page
 
 
-def download_rosters(city, timestamp):
+def download_rosters(city, sheet_id):
     """
     Get all rosters from city and download.
     """
     city_name = city["abbreviation"]
     roster_url = city["full_url"]
-    provider = city["provider"]
     username = city["user"]
     password = city["password"]
-    upload_fn = f"{city_name}_{timestamp}_{provider}"
 
     # Open window
     driver = init_driver()
@@ -54,7 +52,7 @@ def download_rosters(city, timestamp):
         export = []
         for i, roster in enumerate(rosters):
             extra_headers = ["City", "Timestamp", "Class", "Time"]
-            extra_columns = [city_name, timestamp, *classes[i]]
+            extra_columns = [city_name, *classes[i]]
             header = extra_headers + roster[0]
             blank = extra_columns + [None] * len(roster[0])
             data = [[*extra_columns, *row] for row in roster[1:]]
@@ -64,7 +62,7 @@ def download_rosters(city, timestamp):
             df = pd.concat(export)
             df = df.rename(columns=df.iloc[0]).drop(df.index[0]).reset_index(drop=True)
 
-            upload_roster(df, upload_fn)
+            upload_roster(df, sheet_id, city_name)
             print("Outcome: Success")
             exit_code = 0
 
