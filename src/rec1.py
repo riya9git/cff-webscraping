@@ -51,7 +51,7 @@ def download_rosters(city, sheet_id):
 
         export = []
         for i, roster in enumerate(rosters):
-            extra_headers = ["City", "Timestamp", "Class", "Time"]
+            extra_headers = ["City", "Class", "Time"]
             extra_columns = [city_name, *classes[i]]
             header = extra_headers + roster[0]
             blank = extra_columns + [None] * len(roster[0])
