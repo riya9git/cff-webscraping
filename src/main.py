@@ -9,6 +9,7 @@ import apm
 import rec1
 import sheets
 
+PARALLEL = True
 
 LOG_HEADER = [
     "abbreviation",
@@ -48,7 +49,7 @@ def webscrape(city, sheet_id):
                     exit_code = 5
 
     except Exception as e:
-        print(e)
+        print("UNCAUGHT ERROR", e)
         exit_code = 1
 
     city["date"] = curr_date
@@ -65,9 +66,6 @@ def webscrape(city, sheet_id):
 
 
 if __name__ == "__main__":
-    # Set parallel to true for faster download
-    parallel = True
-
     print("Starting webscraper")
 
     # Get timestamp of run
@@ -87,7 +85,7 @@ if __name__ == "__main__":
     sheet_id = sheets.create_new_roster_file(datetime, log_header)
     print(f"id: {sheet_id}")
 
-    if parallel:
+    if PARALLEL:
         # Run webscraping in parallel
         print("Running webscraper in parallel")
         with ThreadPoolExecutor() as executor:

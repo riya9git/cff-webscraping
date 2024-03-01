@@ -25,7 +25,7 @@
   - [X] Out: Obtain the roster csv and upload to this directory.
 3. [X] Generate logs to indicate if a portal was not accessible etc.
   - [X] Show each portal tried and success or failure,
-  - [ ] Number of entries in the roster for it.
+  - [x] Number of entries in the roster for it.
   - [ ] Inform the user - to go to 'Data Management' and run 'Get City Roster' Script from the CFF menu.
   - [X] Look into cities
     - [X] Fremont
@@ -33,7 +33,7 @@
     - [X] Hayward
     - [X] Redwood City
 - [x] Parallelize
-5. An Appscript built into 'Data Management' - called 'Get City Roster'
+4. An Appscript built into 'Data Management' - called 'Get City Roster'
   - [ ] This script will collect the csv data in specified folder from 'City List' tab
   - [ ] Build a dictionary and add it to AllRoster, per product
     - Need a way to tag Products in City Camps, with ProductDocIds in AllRoster

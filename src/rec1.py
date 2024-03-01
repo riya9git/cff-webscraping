@@ -66,13 +66,13 @@ def download_rosters(city, sheet_id):
             print("Outcome: Success")
             exit_code = 0
 
-        except ValueError:
+        except ValueError as e:
             if is_on_page(driver, "No results"):
                 print("Outcome: No classes found!")
                 exit_code = 3
 
             else:
-                print("Uncaught failure: something went wrong")
+                print("UNCAUGHT ERROR", e)
                 exit_code = 1
 
     # Close driver
