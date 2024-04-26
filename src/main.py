@@ -23,6 +23,15 @@ LOG_HEADER = [
     "full_url",
 ]
 
+exit_code_desc = [
+    "Success",
+    "Uncaught exception",
+    "Caught exception",
+    "No records found",
+    "Skipped",
+    "Not configured",
+]
+
 
 def webscrape(city, sheet_id):
     """
@@ -54,7 +63,7 @@ def webscrape(city, sheet_id):
 
     city["date"] = curr_date
     city["time"] = curr_time
-    city["exit_code"] = exit_code
+    city["exit_code"] = exit_code_desc[exit_code]
 
     # Upload log
     print("Uploading log")
