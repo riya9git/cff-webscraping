@@ -62,9 +62,9 @@ def get_sheet_values(creds, sheet_id, sheet_range):
     return values
 
 
-def create_sheet(sheet_name, folder_id, creds):
+def create_spreadsheet(sheet_name, folder_id, creds):
     """
-    Creates a new Google sheet in a given folder.
+    Creates a new Google spreadsheet in a given Drive folder.
     """
     with build("drive", "v3", credentials=creds) as service:
         file_metadata = {
@@ -140,25 +140,23 @@ def append_to_sheet(df, creds, sheet_id, title, header=False):
 
 
 # Webscraper methods
-def create_new_roster_file(timestamp, log_header):
+def create_new_roster_file(timestamp, log_data):
     """
-    Create new roster file, and name the first sheet Log.
+    Create new roster file, and upload log data.
     """
     creds = get_creds()
 
     # Create new sheet
-    sheet_id = create_sheet(timestamp, FOLDER_ID, creds)["id"]
+    sheet_id = create_spreadsheet(timestamp, FOLDER_ID, creds)["id"]
 
-    # Rename Sheet1 to Log
+    # Upload logs
     rename_sheet(creds, sheet_id, 0, "Log")
-
-    # Add header to log
-    append_to_sheet(log_header, creds, sheet_id, "Log")
+    append_to_sheet(log_data, creds, sheet_id, "Log", header=True)
 
     return sheet_id
 
 
-def get_city_links():
+def get_config_file():
     """
     Return config information for the webscraper
     from "City Links" sheet in "DataManagement Scripts".
@@ -168,13 +166,10 @@ def get_city_links():
     creds = get_creds()
     values = get_sheet_values(creds, CITY_PORTALS_SHEET_ID, CITY_PORTALS_SHEET_NAME)
 
-    # Reformat into list of dicts
-    header, data = values[0], values[1:]
-    city_links = []
-    for datum in data:
-        city_links.append({header[i]: datum[i] for i in range(len(datum))})
+    header, rows = values[0], values[1:]
+    config = [dict(zip(header, row)) for row in rows]
 
-    return city_links
+    return config
 
 
 def upload_roster(df, sheet_id, sheet_name):

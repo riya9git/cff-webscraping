@@ -2,6 +2,7 @@
 
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
+from collections import defaultdict
 
 import pandas as pd
 
@@ -9,17 +10,11 @@ import apm
 import rec1
 import sheets
 
-PARALLEL = True
-
 LOG_HEADER = [
     "abbreviation",
     "full_name",
-    "date",
-    "time",
     "exit_code",
-    # "skip",
     "provider",
-    # "domain",
     "full_url",
 ]
 
@@ -32,80 +27,224 @@ exit_code_desc = [
     "Not configured",
 ]
 
+BLANK = ""
+SUMMARY_HEADERS = [
+    "BLANK",
+    "BLANK",
+    "BLANK",
+    "BLANK",
+    "Activity",
+    "Date From",
+    "Date To",
+    "Weekdays",
+    "Time From",
+    "Time To",
+    "BLANK",
+    "Enrollee Name",
+    "BLANK",
+    "BLANK",
+    "Age",
+    "Date of Birth",
+    "Gndr",
+    "1st Contact Name",
+    "HOH Email",
+    "1st Contact Phone",
+    "Alt Contact Phone",
+    "BLANK",
+    "BLANK",
+    "BLANK",
+    "abbreviation",
+    "Date",
+    "BLANK",
+    "BLANK",
+    "BLANK",
+    "Total Paid",
+    "BLANK",
+    "BLANK",
+    "BLANK",
+    "BLANK",
+    "BLANK",
+    "BLANK",
+    "BLANK",
+    "Site",
+    "Location",
+    "run_datetime",
+    "provider",
+]
 
-def webscrape(city, sheet_id):
+
+def get_rosters(config):
     """
     Kick off webscraping for a city. Automatically dispatch to the right
     package based on city domain. Expects a well-formatted row from the
     the "City Links" Google Sheet.
     """
-    city_name = city["full_name"]
-    print(f"\n> {city_name}")
+    print(config["full_name"])
+
+    if config["skip"] == "Y":
+        config["exit_code"] = 4
+        return config
 
     try:
-        if city["skip"] == "Y":
-            print("Skipped due to config file")
-            exit_code = 4
-
-        else:
-            match city["provider"]:
-                case "apm":
-                    exit_code = apm.download_rosters(city, sheet_id)
-                case "rec1":
-                    exit_code = rec1.download_rosters(city, sheet_id)
-                case _:
-                    print("Unconfigured domain")
-                    exit_code = 5
+        match config["provider"]:
+            case "apm":
+                config = apm.get_rosters(config)
+            case "rec1":
+                config = rec1.get_rosters(config)
+            case _:
+                config["exit_code"] = 5
 
     except Exception as e:
-        print("UNCAUGHT ERROR", e)
-        exit_code = 1
+        print(config["full_name"], e)
+        config["exit_code"] = 1
 
-    city["date"] = curr_date
-    city["time"] = curr_time
-    city["exit_code"] = exit_code_desc[exit_code]
+    return config
 
-    # Upload log
-    print("Uploading log")
-    df = pd.DataFrame([city])
-    df = df[LOG_HEADER]
-    sheets.upload_log(df, sheet_id, header=False)
 
-    print("Done")
+def format_log_data(rosters):
+    df = pd.DataFrame(
+        map(lambda x: dict(filter(lambda y: y[0] in LOG_HEADER, x.items())), rosters)
+    )
+    df["exit_code"] = df["exit_code"].map(lambda x: exit_code_desc[x])
+
+    return df
+
+
+def transform_apm(roster):
+    return pd.DataFrame(
+        map(
+            lambda x: [
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                x["Activity"],
+                x["Date From"],
+                x["Date To"],
+                x["Weekdays"],
+                x["Time From"],
+                x["Time To"],
+                BLANK,
+                x["Enrollee Name"],
+                BLANK,
+                BLANK,
+                x["Age"],
+                BLANK,
+                x["Gndr"],
+                x["1st Contact Name"],
+                x["HOH Email"],
+                x["1st Contact Phone"],
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                roster["abbreviation"],
+                x["Date"],
+                BLANK,
+                BLANK,
+                BLANK,
+                x["Total Paid"],
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                x["Site"],
+                x["Location"],
+                run_datetime,
+                roster["provider"],
+            ],
+            map(
+                lambda x: defaultdict(lambda: "", x),
+                filter(
+                    lambda x: x["Activity Status"] == "Open",
+                    roster["rosters"].to_dict("records"),
+                ),
+            ),
+        ),
+    )
+
+
+def transform_rec1(roster):
+    return pd.DataFrame(
+        map(
+            lambda x: [
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                x["Class"],
+                x["Time"].split(" | ")[1].split("-")[0],
+                x["Time"].split(" | ")[1].split("-")[1],
+                BLANK,
+                x["Time"].split(" | ")[2].split("-")[0],
+                x["Time"].split(" | ")[2].split("-")[1],
+                BLANK,
+                x["Participant"],
+                BLANK,
+                BLANK,
+                x["Age"],
+                x["Dob"],
+                x["Gender"],
+                x["Parent"],
+                x["Email"],
+                x["Phone"],
+                x["Mobile"],
+                BLANK,
+                BLANK,
+                BLANK,
+                roster["abbreviation"],
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                BLANK,
+                x["Time"].split(" | ")[0],
+                run_datetime,
+                roster["provider"],
+            ],
+            map(
+                lambda x: defaultdict(lambda: "", x),
+                filter(
+                    lambda x: x["Participant"] is not None,
+                    roster["rosters"].to_dict("records"),
+                ),
+            ),
+        ),
+    )
 
 
 if __name__ == "__main__":
-    print("Starting webscraper")
+    run_datetime = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    print(f"Datetime of run: {run_datetime}")
 
-    # Get timestamp of run
-    curr_date = datetime.now().strftime("%Y-%m-%d")
-    curr_time = datetime.now().strftime("%H-%M-%S")
-    datetime = curr_date + "_" + curr_time
-    print(f"Datetime of run: {datetime}")
+    config = sheets.get_config_file()
 
-    # Get config files
-    print("Getting config file")
-    city_links = sheets.get_city_links()
-    print(f"Got records for {len(city_links)} cities")
+    with ThreadPoolExecutor() as executor:
+        rosters = list(executor.map(get_rosters, config))
 
-    # Create new sheet
-    print("Creating new sheet")
-    log_header = pd.DataFrame(LOG_HEADER + ["roster_count", "course_count"]).T
-    sheet_id = sheets.create_new_roster_file(datetime, log_header)
-    print(f"id: {sheet_id}")
+    log_data = format_log_data(rosters)
+    sheet_id = sheets.create_new_roster_file(run_datetime, log_data)
 
-    if PARALLEL:
-        # Run webscraping in parallel
-        print("Running webscraper in parallel")
-        with ThreadPoolExecutor() as executor:
-            futures = {
-                executor.submit(webscrape, city, sheet_id) for city in city_links
-            }
+    for roster in filter(lambda x: x["exit_code"] == 0, rosters):
+        sheets.upload_roster(roster["rosters"], sheet_id, roster["abbreviation"])
 
-    else:
-        # Run sequentially
-        print("Running webscraper sequentially")
-        for city in city_links:
-            webscrape(city, sheet_id)
+    summary = pd.concat(
+        map(
+            lambda x: transform_apm(x) if x["provider"] == "apm" else transform_rec1(x),
+            filter(lambda x: x["exit_code"] == 0, rosters),
+        ),
+    ).reset_index(drop=True)
+    summary.columns = SUMMARY_HEADERS
 
-    print("All done!")
+    sheets.upload_roster(summary, sheet_id, "Summary")

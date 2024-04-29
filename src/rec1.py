@@ -9,11 +9,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.wait import WebDriverWait
 
-from sheets import upload_roster
 from util import init_driver, is_on_page
 
 
-def download_rosters(city, sheet_id):
+def get_rosters(city):
     """
     Get all rosters from city and download.
     """
@@ -30,7 +29,6 @@ def download_rosters(city, sheet_id):
     time.sleep(1)
 
     # Login to portal
-    print("Logging into portal")
     login(driver, city_name, username, password)
     time.sleep(2)
 
@@ -42,11 +40,16 @@ def download_rosters(city, sheet_id):
     # why the script only continues if there is a TimeoutException at this step.
     try:
         WebDriverWait(driver, 5).until(EC.alert_is_present())
-        print("Caught failure: could not log in")
         exit_code = 2
 
+        # Close driver
+        driver.close()
+
+        city["exit_code"] = exit_code
+
+        return city
+
     except TimeoutException:
-        print("Getting rosters")
         classes, rosters = get_all_rosters(driver)
 
         export = []
@@ -62,24 +65,22 @@ def download_rosters(city, sheet_id):
             df = pd.concat(export)
             df = df.rename(columns=df.iloc[0]).drop(df.index[0]).reset_index(drop=True)
 
-            upload_roster(df, sheet_id, city_name)
-            print("Outcome: Success")
+            city["rosters"] = df
             exit_code = 0
 
-        except ValueError as e:
+        except ValueError:
             if is_on_page(driver, "No results"):
-                print("Outcome: No classes found!")
                 exit_code = 3
 
             else:
-                print("UNCAUGHT ERROR", e)
                 exit_code = 1
 
-    # Close driver
-    driver.close()
+        # Close driver
+        driver.close()
 
-    return exit_code
+        city["exit_code"] = exit_code
 
+        return city
 
 def login(driver, city_name, username, password):
     """
@@ -87,7 +88,6 @@ def login(driver, city_name, username, password):
     """
     driver.find_element(By.PARTIAL_LINK_TEXT, "Log In").click()
     if city_name in ["MB", "SB", "SR"]:
-        print("- Clicking login toggle")
         toggle_button = driver.find_element(By.CLASS_NAME, "rec1-login-toggle-button")
         toggle_button.click()
 
