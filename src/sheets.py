@@ -35,6 +35,7 @@ def get_creds(oauth_loc=CREDS_PATH, scope=SCOPES):
         if creds and creds.expired and creds.refresh_token:
             creds.refresh(Request())
         else:
+            assert os.path.exists(oauth_loc), "Please visit https://console.cloud.google.com/apis/credentials"
             flow = InstalledAppFlow.from_client_secrets_file(oauth_loc, scope)
             creds = flow.run_local_server(port=0)
 

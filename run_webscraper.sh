@@ -5,5 +5,5 @@ set -e
 rm -rf export/
 mkdir export
 touch export/.gitkeep
-source activate cff
+source activate webscraping
 python src/main.py
