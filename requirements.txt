@@ -1,0 +1,5 @@
+pandas==2.1.1
+selenium==4.16
+google-api-python-client
+google-auth-oauthlib
+openpyxl
